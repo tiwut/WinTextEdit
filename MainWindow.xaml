@@ -1,0 +1,652 @@
+<Window x:Class="WinTextEdit.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+        xmlns:local="clr-namespace:WinTextEdit"
+        mc:Ignorable="d"
+        Title="WinTextEdit" 
+        Icon="app.ico"
+        Height="650" Width="1000"
+        Background="{DynamicResource ThemeBackground}"
+        Foreground="{DynamicResource ThemeForeground}"
+        WindowStartupLocation="CenterScreen">
+    
+    <Window.Resources>
+        
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid x:Name="Bg" SnapsToDevicePixels="true" Background="Transparent">
+                            <Track x:Name="PART_Track" IsDirectionReversed="true">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Background="Transparent" BorderThickness="0" Focusable="false"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Background="Transparent" BorderThickness="0" Focusable="false"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb x:Name="Thumb">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border CornerRadius="4" 
+                                                        Background="{DynamicResource ThemeMenuBorder}" 
+                                                        Opacity="0.6"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="false"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter TargetName="PART_Track" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        
+        <Style TargetType="Menu">
+            <Setter Property="Background" Value="{DynamicResource ThemeMenuBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeMenuForeground}"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeMenuBorder}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Menu">
+                        <Border BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeMenuForeground}"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Grid SnapsToDevicePixels="True">
+                            <Border x:Name="BgBorder" 
+                                    Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4"/>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <ContentPresenter x:Name="IconPresenter" 
+                                                  ContentSource="Icon" 
+                                                  Margin="6,0" 
+                                                  VerticalAlignment="Center"/>
+                                
+                                <ContentPresenter Grid.Column="1" 
+                                                  ContentSource="Header" 
+                                                  RecognizesAccessKey="True" 
+                                                  Margin="10,0,20,0" 
+                                                  VerticalAlignment="Center"/>
+                                
+                                <TextBlock Grid.Column="2" 
+                                           Text="{TemplateBinding InputGestureText}" 
+                                           Foreground="{TemplateBinding Foreground}" 
+                                           Opacity="0.6" 
+                                           VerticalAlignment="Center" 
+                                           Margin="0,0,10,0"/>
+
+                                <Path x:Name="RightArrow" 
+                                      Grid.Column="3" 
+                                      Data="M 0 0 L 4 4 L 0 8 Z" 
+                                      Fill="{TemplateBinding Foreground}" 
+                                      VerticalAlignment="Center" 
+                                      Margin="10,0,5,0"
+                                      Visibility="Collapsed"/>
+
+                                <Popup x:Name="SubMenuPopup" 
+                                       AllowsTransparency="True" 
+                                       Focusable="False" 
+                                       IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}" 
+                                       Placement="Bottom" 
+                                       PopupAnimation="Fade">
+                                    <Border Background="{DynamicResource ThemeMenuBackground}" 
+                                            BorderBrush="{DynamicResource ThemeMenuBorder}" 
+                                            BorderThickness="1" 
+                                            Padding="2" 
+                                            CornerRadius="6"
+                                            Margin="0,2,4,4">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="10" Color="#000000" Opacity="0.15" ShadowDepth="2"/>
+                                        </Border.Effect>
+                                        <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                            <ScrollViewer.Template>
+                                                <ControlTemplate TargetType="ScrollViewer">
+                                                    <ScrollContentPresenter Margin="{TemplateBinding Padding}"/>
+                                                </ControlTemplate>
+                                            </ScrollViewer.Template>
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="BgBorder" Property="Background" Value="#20888888"/>
+                            </Trigger>
+                            <Trigger Property="Role" Value="SubmenuItem">
+                                <Setter TargetName="SubMenuPopup" Property="Placement" Value="Right"/>
+                            </Trigger>
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="RightArrow" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="HasItems" Value="False">
+                                <Setter TargetName="SubMenuPopup" Property="Visibility" Value="Collapsed"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ThemeMenuBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeMenuForeground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeMenuBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="4" 
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#15888888"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#25888888"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        
+        <Style x:Key="ModernSwitch" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource ThemeForeground}"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <BulletDecorator Background="Transparent" SnapsToDevicePixels="true">
+                            <BulletDecorator.Bullet>
+                                <Grid x:Name="SwitchGrid" Width="36" Height="20">
+                                    <Border x:Name="Track" Background="#40888888" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource ThemeMenuBorder}"/>
+                                    <Ellipse x:Name="Thumb" Fill="{DynamicResource ThemeForeground}" Width="14" Height="14" HorizontalAlignment="Left" Margin="3,0,3,0">
+                                        <Ellipse.RenderTransform>
+                                            <TranslateTransform X="0"/>
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
+                                </Grid>
+                            </BulletDecorator.Bullet>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </BulletDecorator>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="{DynamicResource ThemeStatusBarBackground}"/>
+                                <Setter TargetName="Thumb" Property="Fill" Value="{DynamicResource ThemeStatusBarForeground}"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="16" Duration="0:0:0.15"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Thumb" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="0" Duration="0:0:0.15"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Track" Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="{DynamicResource ThemeMenuBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeMenuForeground}"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="BgBorder" 
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="Transparent" 
+                                BorderThickness="0"
+                                CornerRadius="4"
+                                Margin="2,1">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BgBorder" Property="Background" Value="#15888888"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="BgBorder" Property="Background" Value="{DynamicResource ThemeStatusBarBackground}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ThemeStatusBarForeground}"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="BgBorder" Property="Background" Value="{DynamicResource ThemeStatusBarBackground}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ThemeStatusBarForeground}"/>
+                                <Setter TargetName="BgBorder" Property="Opacity" Value="0.9"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource ThemeMenuBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeMenuForeground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeMenuBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid x:Name="MainGrid" SnapsToDevicePixels="true">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition MinWidth="20" Width="0"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="true"
+                                   Grid.ColumnSpan="2"
+                                   IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Margin="1"
+                                   Placement="Bottom"
+                                   PopupAnimation="Slide">
+                                <Border x:Name="DropDownBorder"
+                                        Background="{DynamicResource ThemeMenuBackground}"
+                                        BorderBrush="{DynamicResource ThemeMenuBorder}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        MinHeight="20"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                        MinWidth="{Binding ActualWidth, ElementName=MainGrid}">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="8" Color="#000000" Opacity="0.15" ShadowDepth="2"/>
+                                    </Border.Effect>
+                                    <ScrollViewer x:Name="DropDownScrollViewer" CanContentScroll="true">
+                                        <ScrollViewer.Template>
+                                            <ControlTemplate TargetType="ScrollViewer">
+                                                <Grid Background="Transparent">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" CanContentScroll="{TemplateBinding CanContentScroll}" CanHorizontallyScroll="False" CanVerticallyScroll="False" Grid.Column="0" Margin="{TemplateBinding Padding}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                                    <ScrollBar x:Name="PART_VerticalScrollBar" Cursor="Arrow" Grid.Column="1" Maximum="{TemplateBinding ScrollableHeight}" Minimum="0" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </ScrollViewer.Template>
+                                        <Grid x:Name="Grid" RenderOptions.ClearTypeHint="Enabled">
+                                            <Canvas x:Name="Canvas" HorizontalAlignment="Left" Height="0" VerticalAlignment="Top" Width="0">
+                                                <Rectangle x:Name="OpaqueRect" Fill="{Binding Background, ElementName=DropDownBorder}" Height="{Binding ActualHeight, ElementName=DropDownBorder}" Width="{Binding ActualWidth, ElementName=DropDownBorder}"/>
+                                            </Canvas>
+                                            <ItemsPresenter x:Name="ItemsPresenter" KeyboardNavigation.DirectionalNavigation="Contained" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                        </Grid>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+
+                            <ToggleButton x:Name="ToggleButton"
+                                          Grid.ColumnSpan="2"
+                                          Background="{TemplateBinding Background}"
+                                          BorderBrush="{TemplateBinding BorderBrush}"
+                                          BorderThickness="{TemplateBinding BorderThickness}"
+                                          Foreground="{TemplateBinding Foreground}"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="border"
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="4"
+                                                SnapsToDevicePixels="true">
+                                            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <Path x:Name="Arrow"
+                                                      Grid.Column="1"
+                                                      Data="M 0 0 L 3.5 3.5 L 7 0 Z"
+                                                      Fill="{TemplateBinding Foreground}"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      Margin="10,0"/>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="true">
+                                                <Setter Property="Background" Value="#15888888"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="true">
+                                                <Setter Property="Background" Value="#25888888"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <ContentPresenter x:Name="ContentSite"
+                                              IsHitTestVisible="false"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="StatusBarComboBox" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeStatusBarForeground}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="6,2"/>
+        </Style>
+
+        
+        <Style x:Key="FooterLinkStyle" TargetType="Hyperlink">
+            <Setter Property="Foreground" Value="{DynamicResource ThemeForeground}"/>
+            <Setter Property="TextDecorations" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="TextDecorations" Value="Underline"/>
+                    <Setter Property="Foreground" Value="{DynamicResource ThemeStatusBarBackground}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        
+        <Menu Grid.Row="0">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New" Click="New_Click" InputGestureText="Ctrl+N"/>
+                <MenuItem Header="_Open..." Click="Open_Click" InputGestureText="Ctrl+O"/>
+                <MenuItem Header="_Save" Click="Save_Click" InputGestureText="Ctrl+S"/>
+                <MenuItem Header="Save _As..." Click="SaveAs_Click" InputGestureText="Ctrl+Shift+S"/>
+                <Separator Background="{DynamicResource ThemeMenuBorder}"/>
+                <MenuItem Header="E_xit" Click="Exit_Click" InputGestureText="Alt+F4"/>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Undo" Click="Undo_Click" InputGestureText="Ctrl+Z"/>
+                <MenuItem Header="_Redo" Click="Redo_Click" InputGestureText="Ctrl+Y"/>
+                <Separator Background="{DynamicResource ThemeMenuBorder}"/>
+                <MenuItem Header="Cu_t" Click="Cut_Click" InputGestureText="Ctrl+X"/>
+                <MenuItem Header="_Copy" Click="Copy_Click" InputGestureText="Ctrl+C"/>
+                <MenuItem Header="_Paste" Click="Paste_Click" InputGestureText="Ctrl+V"/>
+                <Separator Background="{DynamicResource ThemeMenuBorder}"/>
+                <MenuItem Header="Select _All" Click="SelectAll_Click" InputGestureText="Ctrl+A"/>
+            </MenuItem>
+            <MenuItem Header="_Format">
+                <MenuItem Header="_Font..." Click="Font_Click"/>
+                <MenuItem Header="_Word Wrap" x:Name="WordWrapMenuItem" IsCheckable="True" IsChecked="True" Checked="WordWrap_Changed" Unchecked="WordWrap_Changed"/>
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="Show _Line Numbers" x:Name="LineNumbersMenuItem" IsCheckable="True" IsChecked="True" Checked="LineNumbers_Changed" Unchecked="LineNumbers_Changed"/>
+                <MenuItem Header="Zoom _In" Click="ZoomIn_Click" InputGestureText="Ctrl++"/>
+                <MenuItem Header="Zoom _Out" Click="ZoomOut_Click" InputGestureText="Ctrl+-"/>
+                <MenuItem Header="_Reset Zoom" Click="ZoomReset_Click" InputGestureText="Ctrl+0"/>
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_Preview..." Click="Preview_Click" InputGestureText="Ctrl+P"/>
+            </MenuItem>
+            <MenuItem Header="_Settings" Click="ToggleSettings_Click"/>
+        </Menu>
+
+        
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            
+            <avalonEdit:TextEditor Name="Editor" 
+                                   Grid.Column="0"
+                                   FontFamily="Consolas" 
+                                   FontSize="14"
+                                   WordWrap="True"
+                                   ShowLineNumbers="True"
+                                   BorderThickness="0"
+                                   HorizontalScrollBarVisibility="Auto"
+                                   VerticalScrollBarVisibility="Auto">
+            </avalonEdit:TextEditor>
+
+            
+            <Border Name="SettingsPanel" 
+                    Grid.Column="1" 
+                    Width="300"
+                    Background="{DynamicResource ThemeMenuBackground}" 
+                    BorderBrush="{DynamicResource ThemeMenuBorder}" 
+                    BorderThickness="1,0,0,0"
+                    Visibility="Collapsed">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    
+                    <Grid Grid.Row="0" Margin="0,0,0,20">
+                        <TextBlock Text="Settings" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource ThemeForeground}" VerticalAlignment="Center"/>
+                        <Button Content="î„Š" 
+                                FontFamily="Segoe MDL2 Assets" 
+                                FontSize="12"
+                                FontWeight="Bold"
+                                Background="Transparent" 
+                                BorderThickness="0"
+                                Foreground="{DynamicResource ThemeForeground}"
+                                HorizontalAlignment="Right" 
+                                VerticalAlignment="Center" 
+                                Width="24" Height="24"
+                                Click="ToggleSettings_Click"
+                                Style="{StaticResource ModernButton}"/>
+                    </Grid>
+
+                    
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                            
+                            <TextBlock Text="Appearance" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeForeground}" Margin="0,0,0,10"/>
+                            
+                            <TextBlock Text="Theme Profile" FontSize="12" Foreground="{DynamicResource ThemeForeground}" Opacity="0.8" Margin="0,0,0,5"/>
+                            <ComboBox Name="ThemeComboBox" 
+                                      Margin="0,0,0,15" 
+                                      Padding="8,6"
+                                      SelectionChanged="ThemeComboBox_SelectionChanged">
+                            </ComboBox>
+
+                            <Button Content="Edit Custom Theme YAML File" 
+                                    Margin="0,0,0,25"
+                                    Click="EditCustomTheme_Click"
+                                    Style="{StaticResource ModernButton}"/>
+
+                            <Separator Background="{DynamicResource ThemeMenuBorder}" Margin="0,0,0,20"/>
+
+                            
+                            <TextBlock Text="Windows Integration" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeForeground}" Margin="0,0,0,15"/>
+                            
+                            <CheckBox Name="ContextMenuCheckBox" 
+                                      Content="Add to Explorer Context Menu" 
+                                      Margin="0,0,0,15"
+                                      Style="{StaticResource ModernSwitch}"
+                                      Checked="ContextMenu_Checked"
+                                      Unchecked="ContextMenu_Unchecked"/>
+
+                            <CheckBox Name="DefaultEditorCheckBox" 
+                                      Content="Set as Default Text Editor" 
+                                      Margin="0,0,0,15"
+                                      Style="{StaticResource ModernSwitch}"
+                                      Checked="DefaultEditor_Checked"
+                                      Unchecked="DefaultEditor_Unchecked"/>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    
+                    <StackPanel Grid.Row="2" Margin="0,15,0,0">
+                        <Separator Background="{DynamicResource ThemeMenuBorder}" Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="WinTextEdit v1.0.0" 
+                                   FontSize="11" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="{DynamicResource ThemeForeground}" 
+                                   Opacity="0.85" 
+                                   Margin="0,0,0,2"/>
+                        
+                        <TextBlock Text="Tiwut Project" 
+                                   FontSize="10" 
+                                   Foreground="{DynamicResource ThemeForeground}" 
+                                   Opacity="0.5" 
+                                   Margin="0,0,0,8"/>
+                        
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock FontSize="10" Margin="0,0,0,4" Opacity="0.7">
+                                <Hyperlink NavigateUri="https://tiwut.org" 
+                                           RequestNavigate="Hyperlink_RequestNavigate" 
+                                           Style="{StaticResource FooterLinkStyle}">
+                                    tiwut.org
+                                </Hyperlink>
+                            </TextBlock>
+                            
+                            <TextBlock FontSize="10" Opacity="0.7">
+                                <Hyperlink NavigateUri="https://github.com/tiwut" 
+                                           RequestNavigate="Hyperlink_RequestNavigate" 
+                                           Style="{StaticResource FooterLinkStyle}">
+                                    github.com/tiwut
+                                </Hyperlink>
+                            </TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        
+        <StatusBar Grid.Row="2" Background="{DynamicResource ThemeStatusBarBackground}" Foreground="{DynamicResource ThemeStatusBarForeground}" Padding="10,6">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/> 
+                            <ColumnDefinition Width="Auto"/> 
+                            <ColumnDefinition Width="*"/>    
+                            <ColumnDefinition Width="Auto"/> 
+                            <ColumnDefinition Width="Auto"/> 
+                            <ColumnDefinition Width="Auto"/> 
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+
+            
+            <StatusBarItem Grid.Column="0">
+                <ComboBox Name="LanguageComboBox" 
+                          Style="{StaticResource StatusBarComboBox}"
+                          Width="120"
+                          SelectionChanged="LanguageComboBox_SelectionChanged">
+                </ComboBox>
+            </StatusBarItem>
+
+            
+            <StatusBarItem Grid.Column="2">
+                <TextBlock Name="StatusText" Text="Ready" Margin="10,0"/>
+            </StatusBarItem>
+
+            
+            <StatusBarItem Grid.Column="3" Margin="15,0">
+                <TextBlock Name="LineColumnText" Text="Ln 1, Col 1"/>
+            </StatusBarItem>
+
+            
+            <StatusBarItem Grid.Column="4" Margin="15,0">
+                <TextBlock Name="ZoomText" Text="100%"/>
+            </StatusBarItem>
+
+            
+            <StatusBarItem Grid.Column="5" Margin="15,0">
+                <TextBlock Name="EncodingText" Text="UTF-8"/>
+            </StatusBarItem>
+
+
+        </StatusBar>
+    </Grid>
+</Window>
