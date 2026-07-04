@@ -2,6 +2,8 @@
 
 A modern, native text and code editor built for Windows. Combining the look and feel of the native OS with power-user features, WinTextEdit features robust multi-language syntax highlighting, a live markup previewer, registry-based shell integration, and custom theme rendering.
 
+<img width="986" height="678" alt="image" src="https://github.com/user-attachments/assets/3e654b62-2986-4662-82d6-902342a40e9c" />
+
 ## Key Features
 
 - **Fluent Design Aesthetics**: Sleek, borderless interface utilizing native Windows elements, custom-styled Fluent scrollbars, and dynamic control color templates.
@@ -42,3 +44,16 @@ The repository contains a build script (`build.cmd`) to clean build assets and b
 ## License
 
 This project is open-source under the MIT License.
+
+## Themes
+
+<img width="986" height="678" alt="image" src="https://github.com/user-attachments/assets/558f6f14-e9bf-4e9c-b1b2-e24b517711f0" />
+<img width="986" height="678" alt="image" src="https://github.com/user-attachments/assets/56cd7905-f8e1-42c4-8688-fd56e9d0fa8a" />
+<img width="986" height="678" alt="image" src="https://github.com/user-attachments/assets/efff3795-07d7-4cd2-9a75-966c4d8992b4" />
+<img width="986" height="678" alt="image" src="https://github.com/user-attachments/assets/1708a750-0b6c-4249-a19a-2faf61924606" />
+<img width="986" height="678" alt="image" src="https://github.com/user-attachments/assets/0745ca46-177a-4ebc-9616-ce3c0a5af978" />
+<img width="986" height="678" alt="image" src="https://github.com/user-attachments/assets/67ada2ae-013a-46da-ae93-a07713b8a3c2" />
+<img width="986" height="678" alt="image" src="https://github.com/user-attachments/assets/fe828f4a-13d3-4a72-b626-5fbe7a84b727" />
+<img width="986" height="678" alt="image" src="https://github.com/user-attachments/assets/cc27460e-8477-4587-9ce6-a966e671396f" />
+
+
