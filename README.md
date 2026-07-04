@@ -33,12 +33,11 @@ A modern, native text and code editor built for Windows. Combining the look and 
 The repository contains a build script (`build.cmd`) to clean build assets and bundle the application into a single portable folder:
 
 1. Clone the repository.
-2. Place a square application logo `app.png` in the root directory (used to generate taskbar/executable icons).
-3. Run the build script:
+2. Run the build script:
    ```cmd
    .\build.cmd dist
    ```
-4. Find the compiled binaries inside the `.\dist` directory.
+3. Find the compiled binaries inside the `.\dist` directory.
 
 ## License
 
